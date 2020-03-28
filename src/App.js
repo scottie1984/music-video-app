@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import { css } from "@emotion/core";
+import ClipLoader from "react-spinners/ClipLoader";
 import './App.css';
 
 function videoPlay(i, videos, document) {
@@ -10,9 +12,17 @@ function videoPlay(i, videos, document) {
 
 class App extends Component {
 
-  videos = []
+  constructor(props) {
+    super(props);
+    this.state = {
+      loading: false
+    };
+  }
 
   async play() {
+    this.setState({
+      loading: true
+    })
     const instaTag = document.getElementById("instatag").value || "manutd"
     const response = await fetch(`https://www.instagram.com/explore/tags/${instaTag}/?__a=1`)
     const data = await response.json();
@@ -31,6 +41,9 @@ class App extends Component {
     const youtube_video = document.getElementById("youtube_video"); 
     youtube_video.src = 'https://www.youtube.com/embed/' + youtubeId + '?autoplay=1';
     let i = 0
+    this.setState({
+      loading: false
+    })
     videoPlay(i, videos, document)
 
     document.getElementById('myVideo').addEventListener('ended',myHandler,false);
@@ -63,6 +76,14 @@ class App extends Component {
         <div style={{'text-align': 'center'}}>
             <button id="play" onClick={this.play.bind(this)} type="button">Play Video</button>
         </div>
+
+        <div style={{'text-align': 'center'}}>
+          <ClipLoader
+            size={150}
+            color={"#123abc"}
+            loading={this.state.loading}
+          />
+      </div>
 
         
         <div style={{'text-align': 'center'}}>
