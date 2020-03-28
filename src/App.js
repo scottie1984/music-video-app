@@ -1,29 +1,10 @@
 import React, { Component } from 'react';
-import { css } from "@emotion/core";
 import ClipLoader from "react-spinners/ClipLoader";
+import Video from './Video'
 import './App.css';
 
-function videoPlay(i, videos, document) {
-  const vid = document.getElementById("myVideo"); 
-  vid.setAttribute("src", videos[i].video_url);
-  vid.load()
-  vid.play(); 
-}
-
-class App extends Component {
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      loading: false
-    };
-  }
-
-  async play() {
-    this.setState({
-      loading: true
-    })
-    const instaTag = document.getElementById("instatag").value || "manutd"
+const getVideos = async tag => {
+  const instaTag = tag || "manutd"
     const response = await fetch(`https://www.instagram.com/explore/tags/${instaTag}/?__a=1`)
     const data = await response.json();
     const edges = data.graphql.hashtag.edge_hashtag_to_media.edges
@@ -35,28 +16,54 @@ class App extends Component {
         const videoData = await videoRes.json();
         longVideos.push(videoData.data.shortcode_media)
     }
-    const videos = longVideos.filter(v => v.video_duration < 30)
-    const youtubeInput = document.getElementById("youtubelink").value || "https://www.youtube.com/watch?v=RUCn4w-S2KM"
-    const youtubeId = new URLSearchParams(youtubeInput.split('?')[1]).get('v'); 
-    const youtube_video = document.getElementById("youtube_video"); 
-    youtube_video.src = 'https://www.youtube.com/embed/' + youtubeId + '?autoplay=1';
-    let i = 0
-    this.setState({
-      loading: false
-    })
-    videoPlay(i, videos, document)
+    return longVideos.filter(v => v && v.video_duration < 30)
+}
 
-    document.getElementById('myVideo').addEventListener('ended',myHandler,false);
-    function myHandler() {
-        i++;
-        if(i === videos.length){
-            i = 0;
-            videoPlay(i, videos, document);
-        }
-        else{
-            videoPlay(i, videos, document);
-        }
-    }
+const getYoutubeLink = link => {
+  const youtubeId = new URLSearchParams(link.split('?')[1]).get('v'); 
+  return 'https://www.youtube.com/embed/' + youtubeId + '?autoplay=1'
+}
+
+class App extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      loading: false,
+      youtubelink: '',
+      tag: '',
+      videos: [],
+      youtubeSrc: ''
+    };
+
+    this.play = this.play.bind(this);
+    this.handleYoutubeChange = this.handleYoutubeChange.bind(this);
+    this.handleTagChange = this.handleTagChange.bind(this);
+  }
+
+  handleYoutubeChange(event) {
+    this.setState({youtubelink: event.target.value});
+  }
+
+  handleTagChange(event) {
+    this.setState({tag: event.target.value});
+  }
+
+  async play() {
+    this.setState({
+      loading: true
+    })
+
+    const instaTag = this.state.tag || "manutd"
+    const videos = await getVideos(instaTag)
+
+    const youtubeInput = this.state.youtubelink || "https://www.youtube.com/watch?v=RUCn4w-S2KM"
+    const youtubeSrc = getYoutubeLink(youtubeInput)
+    this.setState({
+      loading: false,
+      videos,
+      youtubeSrc
+    })
   }
 
   render() {
@@ -65,16 +72,16 @@ class App extends Component {
         <h3 style={{'text-align': 'center', color: 'white'}}>Video generator</h3>
         <div style={{'text-align': 'center', color: 'white'}}>
             <label htmlFor="fname">Youtube link:</label>
-            <input type="text" id="youtubelink" name="youtubelink" style={{width:'800px'}} />
+            <input type="text" id="youtubelink" name="youtubelink" style={{width:'800px'}} value={this.state.youtubelink} onChange={this.handleYoutubeChange} />
         </div>
 
         <div style={{'text-align': 'center', color: 'white'}}>
             <label htmlFor="fname">Tag:</label>
-            <input type="text" id="instatag" name="instatag" style={{width:'800px'}} />
+            <input type="text" id="instatag" name="instatag" style={{width:'800px'}} value={this.state.tag} onChange={this.handleTagChange} />
         </div>
 
         <div style={{'text-align': 'center'}}>
-            <button id="play" onClick={this.play.bind(this)} type="button">Play Video</button>
+            <button id="play" onClick={this.play} type="button">Play Video</button>
         </div>
 
         <div style={{'text-align': 'center'}}>
@@ -87,13 +94,11 @@ class App extends Component {
 
         
         <div style={{'text-align': 'center'}}>
-            <video id="myVideo" muted>
-            Your browser does not support HTML5 video.
-            </video>
+            <Video videos={this.state.videos} />
         </div>
 
         <iframe width="0" height="0" id="youtube_video"
-            src="" allow="autoplay">
+            src={this.state.youtubeSrc} allow="autoplay">
         </iframe>
       </React.Fragment>
     );
