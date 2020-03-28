@@ -49,6 +49,7 @@ class App extends Component {
   render() {
     return (
       <React.Fragment>
+        <h3 style={{'text-align': 'center', color: 'white'}}>Video generator</h3>
         <div style={{'text-align': 'center', color: 'white'}}>
             <label htmlFor="fname">Youtube link:</label>
             <input type="text" id="youtubelink" name="youtubelink" style={{width:'800px'}} />
